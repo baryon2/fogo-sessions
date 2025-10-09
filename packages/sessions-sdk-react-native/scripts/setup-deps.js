@@ -386,7 +386,7 @@ function setupPolyfill() {
   } else {
     log('Creating polyfills.js file with comprehensive polyfills');
 
-    const polyfillContent = `// polyfills.js - Comprehensive polyfills for @leapwallet/sessions-sdk-react-native
+    const polyfillContent = `// polyfills.js - Comprehensive polyfills for @fogo/sessions-sdk-react-native
 import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
 import { sha256, sha512 } from '@noble/hashes/sha2.js'
