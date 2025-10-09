@@ -25,3 +25,11 @@ export * from './components';
 export * from './wallet-connect';
 export * from './hooks';
 export * from './utils/use-data';
+
+// Dependency validation utilities
+export {
+  validateDependencies,
+  validateDependenciesWithReport,
+  getDependencyInfo,
+  getAllRequiredDependencies
+} from './utils/validate-dependencies';

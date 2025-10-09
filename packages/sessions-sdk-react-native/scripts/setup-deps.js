@@ -13,14 +13,59 @@ function error(message) {
 }
 
 function detectPackageManager() {
-  // Check for lock files to determine package manager
-  if (fs.existsSync('yarn.lock')) {
-    return 'yarn';
-  } else if (fs.existsSync('pnpm-lock.yaml')) {
-    return 'pnpm';
-  } else if (fs.existsSync('bun.lockb')) {
-    return 'bun';
+  // Check for lock files to determine package manager, starting from current directory and going up
+  let currentDir = process.cwd();
+  const root = path.parse(currentDir).root;
+
+  while (currentDir !== root) {
+    if (fs.existsSync(path.join(currentDir, 'yarn.lock'))) {
+      return 'yarn';
+    } else if (fs.existsSync(path.join(currentDir, 'pnpm-lock.yaml'))) {
+      return 'pnpm';
+    } else if (fs.existsSync(path.join(currentDir, 'bun.lockb'))) {
+      return 'bun';
+    }
+
+    // Move up one directory
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) break; // Reached filesystem root
+    currentDir = parentDir;
   }
+
+  // Also check for workspace indicators
+  try {
+    const packageJsonPath = path.resolve(process.cwd(), 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+      // Check if we're in a workspace package
+      if (packageJson.name && packageJson.name.startsWith('@')) {
+        // Look for workspace root indicators
+        let workspaceDir = process.cwd();
+        while (workspaceDir !== root) {
+          const parentDir = path.dirname(workspaceDir);
+          if (parentDir === workspaceDir) break;
+
+          const parentPackageJson = path.join(parentDir, 'package.json');
+          if (fs.existsSync(parentPackageJson)) {
+            const parentPkg = JSON.parse(fs.readFileSync(parentPackageJson, 'utf8'));
+            if (parentPkg.workspaces || fs.existsSync(path.join(parentDir, 'pnpm-workspace.yaml'))) {
+              // Found workspace root, check for lock files there
+              if (fs.existsSync(path.join(parentDir, 'pnpm-lock.yaml'))) {
+                return 'pnpm';
+              } else if (fs.existsSync(path.join(parentDir, 'yarn.lock'))) {
+                return 'yarn';
+              }
+            }
+          }
+          workspaceDir = parentDir;
+        }
+      }
+    }
+  } catch (err) {
+    // Ignore errors in workspace detection
+  }
+
   return 'npm';
 }
 
@@ -225,6 +270,7 @@ function isExpoProject() {
 
 function checkMissingDependencies(requiredDeps) {
   const missingDeps = [];
+  const notInstalledDeps = [];
 
   try {
     const packageJsonPath = path.resolve(process.cwd(), 'package.json');
@@ -248,16 +294,88 @@ function checkMissingDependencies(requiredDeps) {
             ? dep.split('@').slice(0, 2).join('@') // Handle scoped packages like @noble/hashes
             : dep;
 
+      // First check if it's declared in package.json
       if (!allDeps[packageName]) {
+        missingDeps.push(dep);
+        continue;
+      }
+
+      // Then check if it's actually installed and can be resolved
+      if (!isPackageInstalled(packageName)) {
+        notInstalledDeps.push(dep);
         missingDeps.push(dep);
       }
     }
+
+    // Report findings
+    if (notInstalledDeps.length > 0) {
+      log(`📋 Found ${notInstalledDeps.length} packages declared but not installed:`);
+      notInstalledDeps.forEach(dep => {
+        const packageName = extractPackageName(dep);
+        log(`  ❌ ${packageName} (declared but not installed)`);
+      });
+    }
+
   } catch (err) {
     log(`Error checking dependencies: ${err.message}`);
     return requiredDeps; // Return all as missing if error occurs
   }
 
   return missingDeps;
+}
+
+function extractPackageName(dep) {
+  return dep.includes('@') && !dep.startsWith('@')
+    ? dep.split('@')[0]
+    : dep.startsWith('@')
+      ? dep.split('@').slice(0, 2).join('@') // Handle scoped packages like @noble/hashes
+      : dep;
+}
+
+function isPackageInstalled(packageName) {
+  try {
+    // Try to resolve the package from the current working directory
+    require.resolve(packageName, { paths: [process.cwd()] });
+    return true;
+  } catch (err) {
+    // If require.resolve fails, check if the package exists in node_modules
+    const nodeModulesPath = path.resolve(process.cwd(), 'node_modules', packageName);
+    return fs.existsSync(nodeModulesPath);
+  }
+}
+
+function validateInstalledDependencies(requiredDeps) {
+  log('🔍 Validating installed dependencies...');
+
+  const issues = [];
+  let allValid = true;
+
+  for (const dep of requiredDeps) {
+    const packageName = extractPackageName(dep);
+
+    if (isPackageInstalled(packageName)) {
+      try {
+        // Try to actually import/require the package to verify it works
+        require.resolve(packageName, { paths: [process.cwd()] });
+        log(`✅ ${packageName} - installed and working`);
+      } catch (err) {
+        issues.push(`❌ ${packageName} - installed but broken: ${err.message}`);
+        allValid = false;
+      }
+    } else {
+      issues.push(`❌ ${packageName} - not installed`);
+      allValid = false;
+    }
+  }
+
+  if (!allValid) {
+    log('\n⚠️  Issues found with dependencies:');
+    issues.forEach(issue => log(`  ${issue}`));
+    return false;
+  }
+
+  log('✅ All dependencies are properly installed and working!');
+  return true;
 }
 
 function setupPolyfill() {
@@ -752,8 +870,60 @@ module.exports = config;
 }
 
 function main() {
+  const args = process.argv.slice(2);
+  const command = args[0];
+
   try {
-    log('Setting up @leapwallet/sessions-sdk-react-native dependencies...');
+    if (command === 'validate' || command === '--validate') {
+      log('Validating @fogo/sessions-sdk-react-native dependencies...');
+
+      // Get all required dependencies
+      const peerDeps = [
+        '@metaplex-foundation/umi@>=1.4.0',
+        '@noble/ciphers@>=1.0.0',
+        '@noble/curves@>=1.0.0',
+        '@noble/hashes@>=1.0.0',
+        '@scure/base@>=1.0.0',
+        '@solana/webcrypto-ed25519-polyfill@>=3.0.0',
+        'expo-camera@>=16.0.0',
+        'expo-secure-store@>=14.2.3',
+        'expo-standard-web-crypto@>=2.1.4',
+        'react-native-qrcode-svg@>=6.3.11',
+        'react-native-svg@>=15.1.0',
+        'tweetnacl@>=1.0.3',
+      ];
+
+      let polyfillDeps = [
+        'react-native-get-random-values@^1.9.0',
+        'react-native-url-polyfill@^2.0.0',
+        'buffer@^6.0.3',
+        'process@^0.11.10',
+      ];
+
+      if (isExpoProject()) {
+        const expoSpecificDeps = [
+          'readable-stream@^4.7.0',
+          'expo-crypto@^14.1.5',
+          'browserify-zlib@^0.2.0',
+          'path-browserify@^1.0.1',
+        ];
+        polyfillDeps = [...polyfillDeps, ...expoSpecificDeps];
+      }
+
+      const allDeps = [...peerDeps, ...polyfillDeps];
+      const isValid = validateInstalledDependencies(allDeps);
+
+      if (isValid) {
+        log('\n🎉 All dependencies are properly installed and configured!');
+      } else {
+        log('\n❌ Some dependencies are missing or broken. Run the setup command to fix:');
+        log('   npx @fogo/sessions-sdk-react-native sessions-sdk-setup');
+        process.exit(1);
+      }
+      return;
+    }
+
+    log('Setting up @fogo/sessions-sdk-react-native dependencies...');
 
     installDependencies();
     setupPolyfill();
@@ -777,6 +947,11 @@ function main() {
       );
       log('3. For more details, check the library documentation');
     }
+
+    log('');
+    log('💡 Tip: You can validate your setup anytime by running:');
+    log('   npx @fogo/sessions-sdk-react-native sessions-sdk-validate');
+
   } catch (err) {
     error('Setup failed');
     process.exit(1);

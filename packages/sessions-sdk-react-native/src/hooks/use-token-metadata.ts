@@ -1,14 +1,10 @@
-import { getMint } from '@solana/spl-token';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { useCallback, useEffect } from 'react';
-
-import { getMetadata } from '../utils/get-metadata';
-import { TokenDataStateType, useData } from '../utils/use-data';
+import { PublicKey } from '@solana/web3.js';
+import { useTokenMetadata as useTokenMetadataShared } from '@fogo/sessions-sdk-common';
 import { useMobileConnection } from '../wallet-connect/wallet-provider';
 
+// Re-export for backward compatibility
 export { TokenDataStateType } from '../utils/use-data';
-
-export type Metadata = Awaited<ReturnType<typeof getTokenMetadata>>;
+export type { Metadata } from '@fogo/sessions-sdk-common';
 
 /**
  * Hook to fetch token metadata from mint address.
@@ -18,34 +14,5 @@ export type Metadata = Awaited<ReturnType<typeof getTokenMetadata>>;
  */
 export const useTokenMetadata = (mint: PublicKey) => {
   const { connection } = useMobileConnection();
-  const fetchMetadata = useCallback(
-    async () => getTokenMetadata(connection, mint),
-    [mint, connection]
-  );
-  const data = useData(['tokenMetadata', mint.toBase58()], fetchMetadata, {
-    revalidateIfStale: false,
-    revalidateOnFocus: false,
-    revalidateOnMount: false,
-    revalidateOnReconnect: false,
-  });
-
-  useEffect(() => {
-    if (data.type === TokenDataStateType.NotLoaded) {
-      data.mutate().catch((error: unknown) => {
-        console.error('Failed to fetch token metadata', error);
-      });
-    }
-  }, [data]);
-
-  return data;
-};
-
-const getTokenMetadata = async (connection: Connection, mint: PublicKey) => {
-  const mintAsString = mint.toString();
-  const [mintInfo, metadata] = await Promise.all([
-    getMint(connection, mint),
-    getMetadata([mintAsString]).then((meta) => meta[mintAsString]),
-  ]);
-
-  return { ...mintInfo, ...metadata };
+  return useTokenMetadataShared(mint, connection);
 };

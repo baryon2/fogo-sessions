@@ -19,12 +19,7 @@ import {
 import { Connection, PublicKey } from '@solana/web3.js';
 import React, { type ComponentProps, type ReactNode } from 'react';
 
-// Transaction context for better error messages
-enum TransactionContext {
-  SESSION_ESTABLISHMENT = 'session-establishment',
-  SESSION_LIMIT_UPDATE = 'session-limit-update',
-  SESSION_REPLACEMENT = 'session-replacement'
-}
+import { TransactionContext } from '@fogo/sessions-sdk-common';
 
 function createContextualError(error: unknown, context: TransactionContext) {
   const contextMessages = {
