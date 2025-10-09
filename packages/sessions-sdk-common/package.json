@@ -1,7 +1,6 @@
 {
   "name": "@fogo/sessions-sdk-common",
   "version": "1.0.0",
-  "private": true,
   "description": "Common business logic shared between Fogo Sessions SDKs",
   "keywords": [
     "fogo",
