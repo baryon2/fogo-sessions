@@ -1,15 +1,14 @@
 {
-  "name": "@fogo/sessions-sdk-react",
-  "version": "0.0.22",
-  "private": true,
-  "description": "React components and hooks for integrating with Fogo sessions",
+  "name": "@fogo/sessions-sdk-common",
+  "version": "1.0.0",
+  "description": "Common business logic shared between Fogo Sessions SDKs",
   "keywords": [
     "fogo",
     "sessions",
     "crypto",
     "wallet",
-    "web",
-    "react"
+    "shared",
+    "common"
   ],
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -29,48 +28,23 @@
   },
   "scripts": {
     "build:cjs": "tsc --project tsconfig.build.json --verbatimModuleSyntax false --module commonjs --outDir ./dist/cjs && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
-    "build:css:cjs": "sass --pkg-importer node --no-source-map src:dist/cjs",
-    "build:css:esm": "sass --pkg-importer node --no-source-map src:dist/esm",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm && echo '{\"type\":\"module\"}' > dist/esm/package.json",
     "build:package-json": "transform-package-json ./package.json dist/package.json",
     "fix:format": "prettier --write .",
     "fix:lint:eslint": "eslint --fix .",
-    "fix:lint:stylelint": "stylelint --fix 'src/**/*.scss'",
-    "start:dev:tsc": "tsc --project tsconfig.build.json --outDir ./dist/esm --watch",
-    "start:dev:sass": "sass --pkg-importer node --watch src:dist/esm",
     "test:format": "run-jest --colors --selectProjects format",
-    "test:integration": "run-jest --colors --selectProjects integration",
     "test:lint:eslint": "run-jest --colors --selectProjects lint",
-    "test:lint:stylelint": "stylelint --color 'src/**/*.scss'",
     "test:types": "tsc",
     "test:unit": "run-jest --colors --coverage --selectProjects unit"
   },
-  "peerDependencies": {
-    "react": "^19"
-  },
   "dependencies": {
-    "@coral-xyz/anchor": "catalog:",
-    "@fogo/sessions-idls": "workspace:^",
-    "@fogo/sessions-sdk": "workspace:^",
-    "@fogo/sessions-sdk-common": "workspace:^",
-    "@fogo/sessions-sdk-web": "workspace:^",
-    "@phosphor-icons/react": "catalog:",
-    "@react-hookz/web": "catalog:",
     "@solana/spl-token": "catalog:",
-    "@solana/wallet-adapter-backpack": "catalog:",
-    "@solana/wallet-adapter-react": "catalog:",
-    "@solana/wallet-adapter-react-ui": "catalog:",
-    "@solana/wallet-adapter-wallets": "catalog:",
     "@solana/web3.js": "catalog:",
-    "@yudiel/react-qr-scanner": "catalog:",
-    "clsx": "catalog:",
-    "idb": "catalog:",
-    "modern-normalize": "catalog:",
-    "motion": "catalog:",
-    "qrcode.react": "catalog:",
-    "react-aria-components": "catalog:",
     "swr": "catalog:",
     "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
   },
   "devDependencies": {
     "@cprussin/eslint-config": "catalog:",
@@ -78,7 +52,6 @@
     "@cprussin/prettier-config": "catalog:",
     "@cprussin/transform-package-json": "catalog:",
     "@cprussin/tsconfig": "catalog:",
-    "@testing-library/dom": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@types/jest": "catalog:",
@@ -87,11 +60,8 @@
     "eslint": "catalog:",
     "jest": "catalog:",
     "prettier": "catalog:",
-    "puppeteer": "catalog:",
     "react": "catalog:",
-    "sass": "catalog:",
-    "stylelint": "catalog:",
-    "stylelint-config-standard-scss": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:"
   }
 }
