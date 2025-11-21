@@ -19,7 +19,7 @@ if (globalThis.fetch === undefined) {
 }
 
 export const getMetadata = async (mints: string[]) => {
-  const metadataUrl = new URL('https://www.fogo.io/api/token-metadata');
+  const metadataUrl = new URL('https://api.fogo.io/api/token-metadata');
   for (const mint of mints) {
     metadataUrl.searchParams.append('mint[]', mint);
   }
