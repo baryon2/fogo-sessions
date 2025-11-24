@@ -27,7 +27,7 @@ describe('getMetadata', () => {
     
     expect(mockFetch).toHaveBeenCalledWith(
       expect.objectContaining({
-        href: expect.stringContaining('https://www.fogo.io/api/token-metadata'),
+        href: expect.stringContaining('https://api.fogo.io/api/token-metadata'),
         searchParams: expect.any(URLSearchParams)
       })
     );
@@ -82,7 +82,7 @@ describe('getMetadata', () => {
     
     expect(mockFetch).toHaveBeenCalledWith(
       expect.objectContaining({
-        href: 'https://www.fogo.io/api/token-metadata'
+        href: 'https://api.fogo.io/api/token-metadata'
       })
     );
 
@@ -102,7 +102,7 @@ describe('getMetadata', () => {
     const [fetchCall] = mockFetch.mock.calls;
     const url = fetchCall[0];
     
-    expect(url.href).toContain('https://www.fogo.io/api/token-metadata');
+    expect(url.href).toContain('https://api.fogo.io/api/token-metadata');
     expect(url.searchParams.getAll('mint[]')).toEqual(mints);
   });
 
