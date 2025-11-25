@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { z } from 'zod';
 
 import type { EstablishedSessionState } from '../session-provider';
-import { getMetadata } from '../utils/get-metadata';
+import { getMetadata, Network } from '../utils/get-metadata';
 import { useData } from '../utils/use-data';
 import { useMobileConnection } from '../wallet-connect/wallet-provider';
 
@@ -92,7 +92,8 @@ const getTokenAccounts = async (
     })
   );
 
-  const metadata = await getMetadata(accounts.map((account) => account.mint));
+  // TODO: Network value here should be coming from `useSessionContext` but it's not present in RN SDK yet so hardcoding to Testnet.
+  const metadata = await getMetadata(accounts.map((account) => account.mint), Network.Testnet);
 
   return {
     tokensInWallet: accounts
