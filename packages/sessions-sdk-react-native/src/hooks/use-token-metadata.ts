@@ -2,7 +2,7 @@ import { getMint } from '@solana/spl-token';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useCallback, useEffect, useState } from 'react';
 
-import { getMetadata } from '../utils/get-metadata';
+import { getMetadata, Network } from '../utils/get-metadata';
 export { TokenDataStateType } from '../utils/use-data';
 import { TokenDataStateType, useData } from '../utils/use-data';
 import { useMobileConnection } from '../wallet-connect/wallet-provider';
@@ -43,7 +43,8 @@ const getTokenMetadata = async (connection: Connection, mint: PublicKey) => {
   const mintAsString = mint.toString();
   const [mintInfo, metadata] = await Promise.all([
     getMint(connection, mint),
-    getMetadata([mintAsString]).then((meta) => meta[mintAsString]),
+    // TODO: Network value here should be coming from `useSessionContext` but it's not present in RN SDK yet so hardcoding to Testnet.
+    getMetadata([mintAsString], Network.Testnet).then((meta) => meta[mintAsString]),
   ]);
 
   return { ...mintInfo, ...metadata };

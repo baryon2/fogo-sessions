@@ -174,7 +174,8 @@ export const useSendToken = ({
         onSuccess?.(result.signature);
         // Reset form on success
         setAmountState('');
-        setRecipientState('');
+        // Do not reset recipient state on success as we need to show recipient address after success on fogo mobile app
+        // setRecipientState('');
       } else {
         const errorMsg = `Failed to send tokens: ${errorToString(result.error)}`;
         setError(errorMsg);

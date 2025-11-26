@@ -1,4 +1,4 @@
-import { getMetadata } from '../../utils/get-metadata';
+import { getMetadata, Network } from '../../utils/get-metadata';
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -23,11 +23,11 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(mockResponse)
     });
 
-    const result = await getMetadata(['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v']);
+    const result = await getMetadata(['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'], Network.Testnet);
     
     expect(mockFetch).toHaveBeenCalledWith(
       expect.objectContaining({
-        href: expect.stringContaining('https://www.fogo.io/api/token-metadata'),
+        href: expect.stringContaining('https://api.fogo.io/api/token-metadata'),
         searchParams: expect.any(URLSearchParams)
       })
     );
@@ -59,7 +59,7 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(mockResponse)
     });
 
-    const result = await getMetadata(mints);
+    const result = await getMetadata(mints, Network.Testnet);
     
     // Check that the URL contains both mint parameters
     const [fetchCall] = mockFetch.mock.calls;
@@ -78,11 +78,11 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(mockResponse)
     });
 
-    const result = await getMetadata([]);
+    const result = await getMetadata([], Network.Testnet);
     
     expect(mockFetch).toHaveBeenCalledWith(
       expect.objectContaining({
-        href: 'https://www.fogo.io/api/token-metadata'
+        href: expect.stringContaining('https://api.fogo.io/api/token-metadata')
       })
     );
 
@@ -97,12 +97,12 @@ describe('getMetadata', () => {
       json: () => Promise.resolve({})
     });
 
-    await getMetadata(mints);
+    await getMetadata(mints, Network.Testnet);
     
     const [fetchCall] = mockFetch.mock.calls;
     const url = fetchCall[0];
     
-    expect(url.href).toContain('https://www.fogo.io/api/token-metadata');
+    expect(url.href).toContain('https://api.fogo.io/api/token-metadata');
     expect(url.searchParams.getAll('mint[]')).toEqual(mints);
   });
 
@@ -120,7 +120,7 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(validResponse)
     });
 
-    const result = await getMetadata(['test-mint']);
+    const result = await getMetadata(['test-mint'], Network.Testnet);
     expect(result).toEqual(validResponse);
   });
 
@@ -138,7 +138,7 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(invalidResponse)
     });
 
-    await expect(getMetadata(['test-mint'])).rejects.toThrow();
+    await expect(getMetadata(['test-mint'], Network.Testnet)).rejects.toThrow();
   });
 
   it('should throw validation error for response with wrong types', async () => {
@@ -155,13 +155,13 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(invalidResponse)
     });
 
-    await expect(getMetadata(['test-mint'])).rejects.toThrow();
+    await expect(getMetadata(['test-mint'], Network.Testnet)).rejects.toThrow();
   });
 
   it('should handle fetch errors', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-    await expect(getMetadata(['test-mint'])).rejects.toThrow('Network error');
+    await expect(getMetadata(['test-mint'], Network.Testnet)).rejects.toThrow('Network error');
   });
 
   it('should handle JSON parsing errors', async () => {
@@ -170,7 +170,7 @@ describe('getMetadata', () => {
       json: () => Promise.reject(new Error('Invalid JSON'))
     });
 
-    await expect(getMetadata(['test-mint'])).rejects.toThrow('Invalid JSON');
+    await expect(getMetadata(['test-mint'], Network.Testnet)).rejects.toThrow('Invalid JSON');
   });
 
   it('should handle complex metadata structure', async () => {
@@ -192,7 +192,7 @@ describe('getMetadata', () => {
       json: () => Promise.resolve(complexResponse)
     });
 
-    const result = await getMetadata(['mint1', 'mint2']);
+    const result = await getMetadata(['mint1', 'mint2'], Network.Testnet);
     expect(result).toEqual(complexResponse);
   });
 });
